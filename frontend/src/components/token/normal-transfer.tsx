@@ -1,44 +1,30 @@
 'use client';
 
-import { useWriteSimpleDeFiTokenTransfer } from '@/generated';
-import { BaseError, useWaitForTransactionReceipt } from 'wagmi';
+import { useNormalTransfer } from '@/hooks/useNormalTransfer';
+import TransactionStatus from '../transaction-status';
 
-export default function NormalTransfer() {
+interface NormalTransferProps {
+    address: `0x${string}`
+    decimals: number
+}
+
+export default function NormalTransfer({ address, decimals }: NormalTransferProps) {
 
     const {
-        data: hash,
-        error,
-        isPending,
-        writeContract,
-    } = useWriteSimpleDeFiTokenTransfer()
-    const {
-        isLoading: isConfirming,
-        isSuccess: isConfirmed
-    } = useWaitForTransactionReceipt({ hash })
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        const formData = new FormData(e.target as HTMLFormElement)
-        const recipient = formData.get('recipient') as `0x${string}`
-        const amount = formData.get('amount') as string
-        if (!recipient || !amount) {
-            return
-        }
-        writeContract({
-            args: [recipient, BigInt(amount)]
-        })
-    }
+        transactionStatus,
+        handleSubmit,
+    } = useNormalTransfer({ address, decimals });
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white border border-black p-4 rounded text-black">
-            <h2 className="text-xl font-bold mb-4">Normal Transfer</h2>
+        <form onSubmit={handleSubmit} className="border-t border-white mt-4 pt-4">
+            <h2 className="text-xl font-bold mb-2">Normal Transfer</h2>
             <div className="mb-4">
                 <label htmlFor="recipient" className="block mb-2">Recipient Address</label>
                 <input
                     type="text"
                     id="recipient"
                     name="recipient"
-                    className="w-full p-2 border border-black rounded"
+                    className="w-full p-2 text-black"
                     placeholder="Enter recipient address"
                     required
                 />
@@ -49,22 +35,19 @@ export default function NormalTransfer() {
                     type="number"
                     id="amount"
                     name="amount"
-                    className="w-full p-2 border border-black rounded"
+                    className="w-full p-2 text-black"
                     placeholder="Enter amount to transfer"
                     required
                 />
             </div>
+
             <button
-                disabled={isPending}
-                type="submit" className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">
-                {isPending ? 'Transfering...' : 'Transfer'}
+                disabled={transactionStatus.isPending}
+                type="submit"
+                className="w-full bg-white text-black px-4 py-2 rounded hover:bg-gray-200 mr-2">
+                {transactionStatus.isPending ? "Transferring..." : "Transfer"}
             </button>
-            {hash && <div>Transaction Hash: {hash}</div>}
-            {isConfirming && <div>Waiting for confirmation...</div>}
-            {isConfirmed && <div>Transaction confirmed.</div>}
-            {error && (
-                <div>Error: {(error as BaseError).shortMessage || error.message}</div>
-            )}
+            <TransactionStatus transactionStatus={transactionStatus} />
         </form>
     )
 }

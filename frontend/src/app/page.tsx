@@ -1,28 +1,39 @@
-import ConnectWallet from '../components/connect-wallet'
+"use client"
 
-import Token from '../components/token/detail'
-import NormalTransfer from '../components/token/normal-transfer'
-import TransferWithBurn from '../components/token/transfer-with-burn'
+import { useAccount } from "wagmi"
 
 export default function Home() {
 
+  const account = useAccount()
+
+  if (!account.isConnected) {
+    return (
+      <div className='text-center'>
+        Please connect to a wallet to start.
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-white text-black">
-      <nav className="bg-black text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">DeFi Application</h1>
-          <ConnectWallet />
-        </div>
-      </nav>
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col gap-8">
-          <Token />
-          <div className="space-y-4">
-            <NormalTransfer />
-            <TransferWithBurn />
-          </div>
-        </div>
-      </main>
-    </div>
+    <div className='flex flex-col w-full'>
+      <h1 className="text-4xl font-bold mb-4">Welcome to DeFi Application</h1>
+      <p className="mb-4">Connected as <span className="font-bold">{account.address}</span></p>
+      <h3 className="font-bold">Connected Addresses:</h3>
+      {
+        account?.addresses?.map(a => {
+          return (
+            <p key={a}>{a}</p>
+          )
+        })
+      }
+      <p className="my-4">Connector: {account.connector?.name}</p>
+      {
+        account.chain &&
+        <>
+          <p className="mb-4">Chain Name: {account.chain?.name}</p>
+          <p className="mb-4">Chain Id: {account.chain?.id}</p>
+        </>
+      }
+    </div >
   )
 }

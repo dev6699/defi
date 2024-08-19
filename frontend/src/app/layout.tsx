@@ -6,6 +6,7 @@ import { cookieToInitialState } from 'wagmi'
 
 import { getConfig } from "@/lib/wagmi"
 import { Providers } from "@/app/providers";
+import TopNav from "@/components/top-nav";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,7 +27,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers initialState={initialState}>{children}</Providers>
+        <Providers initialState={initialState}>
+          <div className="min-h-screen">
+            <TopNav />
+            <main className="container mx-auto p-8 max-w-3xl">
+              {children}
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

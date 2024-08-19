@@ -29,7 +29,7 @@ export default function TransferWithBurn() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white border border-black p-4 rounded text-black">
+        <form onSubmit={handleSubmit} className="border border-white p-4 rounded">
             <h2 className="text-xl font-bold mb-4">Transfer with Burn</h2>
             <div className="mb-4">
                 <label htmlFor="recipient" className="block mb-2">Recipient Address</label>
@@ -37,7 +37,7 @@ export default function TransferWithBurn() {
                     type="text"
                     id="recipient"
                     name="recipient"
-                    className="w-full p-2 border border-black rounded"
+                    className="w-full p-2 text-black"
                     placeholder="Enter recipient address"
                     required
                 />
@@ -48,7 +48,7 @@ export default function TransferWithBurn() {
                     type="number"
                     id="amount"
                     name="amount"
-                    className="w-full p-2 border border-black rounded"
+                    className="w-full p-2 text-black"
                     placeholder="Enter amount to transfer (10% of tokens will be burnt automatically)"
                     required
                 />
@@ -56,7 +56,7 @@ export default function TransferWithBurn() {
 
             <button
                 disabled={isPending}
-                type="submit" className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">
+                type="submit" className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200">
                 {isPending ? 'Transfering...' : 'Transfer with Burn'}
             </button>
             {hash && <div>Transaction Hash: {hash}</div>}
