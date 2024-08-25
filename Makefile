@@ -1,3 +1,7 @@
+.PHONY: dev
+dev:
+	cd frontend && npm run dev
+
 .PHONY: node
 node:
 	npx hardhat node
@@ -13,3 +17,7 @@ generate:
 .PHONY: test
 test:
 	npx hardhat test
+
+.PHONY: coverage
+coverage:
+	npx hardhat coverage

@@ -2,20 +2,33 @@
 
 import { erc20Abi, formatUnits, parseUnits } from "viem"
 import { ChangeEvent, useEffect, useRef, useState } from "react"
-import { useAccount, useChainId, useReadContracts, useWaitForTransactionReceipt } from "wagmi"
+import { useAccount, useBalance, useChainId, useReadContracts, useWaitForTransactionReceipt } from "wagmi"
 
-import { SUPPORTED_TOKENS } from "@/lib/tokens"
+import { ETH, SUPPORTED_TOKENS } from "@/lib/tokens"
 import { Address, Graph, buildGraphFromEdges, findAllPaths } from "@/lib/graph"
 import {
     ammRouterAbi,
     ammRouterAddress,
     useReadErc20Allowance,
     useReadErc20BalanceOf,
+    useWriteAmmRouterSwapEthForExactTokens,
+    useWriteAmmRouterSwapExactEthForTokens,
+    useWriteAmmRouterSwapExactTokensForEth,
     useWriteAmmRouterSwapExactTokensForTokens,
+    useWriteAmmRouterSwapTokensForExactEth,
     useWriteAmmRouterSwapTokensForExactTokens,
-    useWriteErc20Approve
+    useWriteErc20Approve,
+    useWriteWethDeposit,
+    useWriteWethWithdraw,
+    wethAddress
 } from "@/generated"
 import { Token, TokenPair } from "./useTokenPair"
+
+export enum SWAP_MODE {
+    SWAP = "SWAP",
+    WRAP = "WRAP",
+    UNWRAP = "UNWRAP"
+}
 
 export const useSwap = (tokenPairs: TokenPair[]) => {
     const [hash, setHash] = useState('' as `0x${string}`);
@@ -66,10 +79,19 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         // find all available paths from tokenA to tokenB
         const _paths = findAllPaths(tokenA.address, tokenB.address, graph)
         setPaths(_paths)
+        if (JSON.stringify(_paths) !== JSON.stringify(paths)) {
+            // only clear best paths when new paths is different
+            // changing of ETH <-> WETH will get same paths
+            setBestPaths([])
+        }
     }, [tokenA, tokenB, graph])
 
     const account = useAccount()
     const chainId = useChainId()
+    const ethBalance = useBalance({
+        address: account.address
+    })
+    const wethAddr = wethAddress[chainId]
 
     const tokenSymbols = useReadContracts({
         contracts: SUPPORTED_TOKENS.map((t) => ({
@@ -94,6 +116,8 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         address: tokenB?.address,
         args: [account.address!],
     })
+    const tokenABalanceData = tokenA?.isETH ? ethBalance.data?.value : tokenABalance.data
+    const tokenBBalanceData = tokenB?.isETH ? ethBalance.data?.value : tokenBBalance.data
 
     const getAmountsOut = useReadContracts({
         contracts: paths.map(
@@ -135,9 +159,20 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
             ammRouterAddress[chainId]
         ],
     })
+    const tokenAAllowanceData = tokenA?.isETH ? ethBalance.data?.value : tokenAAllowance.data
+
+    const swapMode = tokenA?.isETH && tokenB?.address === wethAddr ? SWAP_MODE.WRAP
+        : tokenA?.address === wethAddr && tokenB?.isETH ? SWAP_MODE.UNWRAP : SWAP_MODE.SWAP
+
     const writeErc20Approve = useWriteErc20Approve()
     const writeAmmRouterSwapExactTokensForTokens = useWriteAmmRouterSwapExactTokensForTokens()
     const writeAmmRouterSwapTokensForExactTokens = useWriteAmmRouterSwapTokensForExactTokens()
+    const writeAmmRouterSwapExactEthForTokens = useWriteAmmRouterSwapExactEthForTokens()
+    const writeAmmRouterSwapEthForExactTokens = useWriteAmmRouterSwapEthForExactTokens()
+    const writeAmmRouterSwapTokensForExactEth = useWriteAmmRouterSwapTokensForExactEth()
+    const writeAmmRouterSwapExactTokensForEth = useWriteAmmRouterSwapExactTokensForEth()
+    const writeWethDeposit = useWriteWethDeposit()
+    const writeWethWithdraw = useWriteWethWithdraw()
 
     const {
         isLoading: isConfirming,
@@ -160,6 +195,10 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
     }, [getReserves.data, price])
 
     useEffect(() => {
+        if (swapMode !== SWAP_MODE.SWAP) {
+            return
+        }
+
         if (!getAmountsOut.data || !tokenB) {
             return
         }
@@ -196,9 +235,13 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         setAmountB(max)
         setBestPaths(_bestPath)
         setPrice(+amountA / +max)
-    }, [getAmountsOut.data])
+    }, [getAmountsOut.data, swapMode])
 
     useEffect(() => {
+        if (swapMode !== SWAP_MODE.SWAP) {
+            return
+        }
+
         if (!getAmountsIn.data || !tokenA) {
             return
         }
@@ -212,7 +255,6 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         if (amountB === amountBRef.current) {
             return
         }
-        console.log('amounssinn', getAmountsIn.data)
 
         let _bestPath: Address[] = []
         let min = `${Number.MAX_SAFE_INTEGER}`
@@ -236,7 +278,7 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         setAmountA(min)
         setBestPaths(_bestPath)
         setPrice(+min / +amountB)
-    }, [getAmountsIn.data])
+    }, [getAmountsIn.data, swapMode])
 
     const reorderToken = () => {
         if (lastInteractTokenRef.current.token === tokenA?.symbol) {
@@ -249,54 +291,91 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         setTokenB(tokenA)
     }
 
-    const selectTokenA = (symbol: string) => {
+    const selectToken = (
+        val: string,
+        t: "A" | "B"
+    ) => {
+        const isA = t === 'A'
+        const tokenCheck = isA ? tokenB : tokenA
+        const setToken = isA ? setTokenA : setTokenB
+
+        if (!val) {
+            return
+        }
+
+        if (val === ETH.symbol) {
+            if (val === tokenCheck?.symbol) {
+                return
+            }
+
+            setToken({
+                symbol: ETH.symbol,
+                decimals: ETH.decimals,
+                address: wethAddr,
+                isETH: true
+            })
+
+            if (tokenCheck?.address === wethAddr) {
+                if (isA) {
+                    setAmountA(amountB)
+                } else {
+                    setAmountB(amountA)
+                }
+            }
+            return
+        }
+
         if (!tokenSymbols.data || !tokenDecimals.data) {
             return
         }
 
-        if (symbol === tokenB?.symbol) {
+        const idx = +val
+        const symbol = tokenSymbols.data[+idx].result as string
+        if (!symbol || symbol === tokenCheck?.symbol) {
             return
         }
 
-        const idx = tokenSymbols.data.findIndex(s => s.result === symbol)
         const decimals = tokenDecimals.data[idx].result as number
         const address = SUPPORTED_TOKENS[idx][chainId]
         lastInteractTokenRef.current.token = symbol
-        setTokenA({
+        setToken({
             symbol,
             decimals,
-            address
+            address,
+            isETH: false
         })
+        if (address === wethAddr && tokenCheck?.isETH) {
+            if (isA) {
+                setAmountA(amountB)
+            } else {
+                setAmountB(amountA)
+            }
+        }
     }
 
-    const selectTokenB = (symbol: string) => {
-        if (!tokenSymbols.data || !tokenDecimals.data) {
-            return
-        }
+    const selectTokenA = (val: string) => {
+        selectToken(val, "A")
+    }
 
-        if (symbol === tokenA?.symbol) {
-            return
-        }
-
-        const idx = tokenSymbols.data.findIndex(s => s.result === symbol)
-        const decimals = tokenDecimals.data[idx].result as number
-        const address = SUPPORTED_TOKENS[idx][chainId]
-        lastInteractTokenRef.current.token = symbol
-        setTokenB({
-            symbol,
-            decimals,
-            address
-        })
+    const selectTokenB = (val: string) => {
+        selectToken(val, "B")
     }
 
     const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
         const id = e.target.id
         const isTokenA = id === 'tokenA'
+        const isSwap = swapMode === SWAP_MODE.SWAP
         if (isTokenA) {
             setAmountA(v)
+            if (!isSwap) {
+                setAmountB(v)
+            }
         } else {
             setAmountB(v)
+            if (!isSwap) {
+                setAmountA(v)
+            }
         }
         const token = (isTokenA ? tokenA?.symbol : tokenB?.symbol) || ''
         lastInteractTokenRef.current = { token, amount: v }
@@ -311,7 +390,7 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
             return
         }
 
-        if (tokenAAllowance.data === undefined) {
+        if (tokenAAllowanceData === undefined) {
             return
         }
 
@@ -320,7 +399,7 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         }
 
         const valA = parseUnits(amountA, tokenA.decimals)
-        if (tokenAAllowance.data < valA) {
+        if (tokenAAllowanceData < valA && !tokenA.isETH) {
             await writeErc20Approve.writeContractAsync({
                 account: account.address,
                 address: tokenA.address,
@@ -328,37 +407,115 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
             })
         }
 
-
-        const swapWithExactToken = lastInteractTokenRef.current.token === tokenA.symbol
-        if (swapWithExactToken) {
+        let res = '' as `0x${string}`
+        const swapWithExact = lastInteractTokenRef.current.token === tokenA.symbol
+        if (swapWithExact) {
             // Mininum amount to receive
             const amountOutMin = parseUnits(`${+amountB * 0.9}`, tokenB.decimals)
-            const res = await writeAmmRouterSwapExactTokensForTokens.writeContractAsync({
-                args: [
-                    valA,
-                    amountOutMin,
-                    bestPath,
-                    account.address,
-                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
-                ],
-            })
-            setHash(res)
+            if (tokenA.isETH) {
+                res = await writeAmmRouterSwapExactEthForTokens.writeContractAsync({
+                    args: [
+                        amountOutMin,
+                        bestPath,
+                        account.address,
+                        BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                    ],
+                    value: valA
+                })
+            } else if (tokenB.isETH) {
+                res = await writeAmmRouterSwapExactTokensForEth.writeContractAsync({
+                    args: [
+                        valA,
+                        amountOutMin,
+                        bestPath,
+                        account.address,
+                        BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                    ],
+                })
+            } else {
+                res = await writeAmmRouterSwapExactTokensForTokens.writeContractAsync({
+                    args: [
+                        valA,
+                        amountOutMin,
+                        bestPath,
+                        account.address,
+                        BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                    ],
+                })
+            }
         } else {
             // Maximum amount to spent
             const amountInMax = parseUnits(`${+amountA * 1.1}`, tokenA.decimals)
             const amountOut = parseUnits(amountB, tokenB.decimals)
-            const res = await writeAmmRouterSwapTokensForExactTokens.writeContractAsync({
-                args: [
-                    amountOut,
-                    amountInMax,
-                    bestPath,
-                    account.address,
-                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
-                ],
-            })
-            setHash(res)
+            if (tokenA.isETH) {
+                res = await writeAmmRouterSwapEthForExactTokens.writeContractAsync({
+                    args: [
+                        amountInMax,
+                        bestPath,
+                        account.address,
+                        BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                    ],
+                    value: amountOut
+                })
+            } else if (tokenB.isETH) {
+                res = await writeAmmRouterSwapTokensForExactEth.writeContractAsync({
+                    args: [
+                        amountOut,
+                        amountInMax,
+                        bestPath,
+                        account.address,
+                        BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                    ],
+                })
+            } else {
+                res = await writeAmmRouterSwapTokensForExactTokens.writeContractAsync({
+                    args: [
+                        amountOut,
+                        amountInMax,
+                        bestPath,
+                        account.address,
+                        BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                    ],
+                })
+            }
         }
+        setHash(res)
     };
+
+    const handleWrap = async () => {
+        if (!account.address) {
+            return
+        }
+
+        if (!tokenA || !tokenB) {
+            return
+        }
+
+        if (tokenAAllowanceData === undefined) {
+            return
+        }
+
+        if (amountA === '0' || amountB === '0') {
+            return
+        }
+
+        const valA = parseUnits(amountA, tokenA.decimals)
+        let res = '' as `0x${string}`
+        if (swapMode === SWAP_MODE.WRAP) {
+            res = await writeWethDeposit.writeContractAsync({
+                value: valA
+            })
+        }
+        if (swapMode === SWAP_MODE.UNWRAP) {
+            res = await writeWethWithdraw.writeContractAsync({
+                args: [
+                    valA
+                ]
+            })
+        }
+
+        setHash(res)
+    }
 
     return {
         transactionStatus: {
@@ -372,13 +529,15 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
             isConfirmed,
             hash,
         },
+        swapMode,
+        canSwap: !!bestPath.length,
         tokenSymbols,
         tokenA,
         tokenB,
         amountA,
         amountB,
-        tokenABalance,
-        tokenBBalance,
+        tokenABalanceData,
+        tokenBBalanceData,
         bestSwapPath: printSwapPath(bestPath, graph),
         price,
         priceImpact,
@@ -386,7 +545,8 @@ export const useSwap = (tokenPairs: TokenPair[]) => {
         selectTokenB,
         reorderToken,
         handleAmountChange,
-        handleSwap
+        handleSwap,
+        handleWrap
     }
 }
 

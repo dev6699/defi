@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { formatUnits } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import {
     useReadErc20Symbol,
     useReadErc20Decimals,
@@ -12,12 +12,15 @@ import {
     useReadTokenPairGetReserves,
     useReadTokenPairTokenA,
     useReadTokenPairTokenB,
+    wethAddress,
 } from "@/generated"
+import { ETH, WETHSymbol } from "@/lib/tokens";
 
 export interface Token {
     symbol: string;
     address: `0x${string}`
     decimals: number
+    isETH: boolean
 }
 
 export type TokenPair = ReturnType<typeof useTokenPair>
@@ -64,6 +67,9 @@ export const useTokenPair = (address: `0x${string}`) => {
         address: tokenBAddress.data
     })
 
+    const chainId = useChainId()
+    const wethAddr = wethAddress[chainId]
+
     useEffect(() => {
         if (!tokenAAddress.data ||
             !tokenBAddress.data ||
@@ -75,15 +81,35 @@ export const useTokenPair = (address: `0x${string}`) => {
             return
         }
 
+        let isTokenAETH = false
+        let _tokenASymbol = tokenASymbol.data
+        let _tokenAAddress = tokenAAddress.data
+        if (_tokenASymbol === WETHSymbol && tokenAAddress.data === wethAddr) {
+            _tokenASymbol = ETH.symbol
+            _tokenAAddress = wethAddr
+            isTokenAETH = true
+        }
+
+        let isTokenBETH = false
+        let _tokenBAddress = tokenBAddress.data
+        let _tokenBSymbol = tokenBSymbol.data
+        if (_tokenBSymbol === WETHSymbol && tokenBAddress.data === wethAddr) {
+            _tokenBSymbol = ETH.symbol
+            _tokenBAddress = wethAddr
+            isTokenBETH = true
+        }
+
         setTokenA({
-            address: tokenAAddress.data,
-            symbol: tokenASymbol.data,
-            decimals: tokenADecimals.data
+            address: _tokenAAddress,
+            symbol: _tokenASymbol,
+            decimals: tokenADecimals.data,
+            isETH: isTokenAETH
         })
         setTokenB({
-            address: tokenBAddress.data,
-            symbol: tokenBSymbol.data,
-            decimals: tokenBDecimals.data
+            address: _tokenBAddress,
+            symbol: _tokenBSymbol,
+            decimals: tokenBDecimals.data,
+            isETH: isTokenBETH
         })
 
     }, [
@@ -92,10 +118,12 @@ export const useTokenPair = (address: `0x${string}`) => {
         tokenASymbol.data,
         tokenBSymbol.data,
         tokenADecimals.data,
-        tokenBDecimals.data
+        tokenBDecimals.data,
+        wethAddr
     ])
 
     return {
+        wethAddr,
         address,
         tokenPairBalance,
         tokenPairBalanceOf,

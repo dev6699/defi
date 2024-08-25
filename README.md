@@ -56,11 +56,15 @@ make generate
 make test
 ```
 
+### Run tests coverage
+```bash
+make coverage
+```
+
 ### Running the Frontend
 Open http://localhost:3000 in your browser to view the app.
 ```bash
-cd frontend
-npm run dev
+make dev
 ```
 
 ## Disclaimer

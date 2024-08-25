@@ -1,8 +1,8 @@
 "use client"
 
 import { formatUnits, parseUnits } from 'viem';
-import { useState, useEffect, ChangeEvent } from 'react';
-import { useAccount, useChainId, useReadContracts } from 'wagmi';
+import { useState, useEffect, ChangeEvent, SetStateAction } from 'react';
+import { useAccount, useBalance, useChainId, useReadContracts } from 'wagmi';
 import {
     erc20Abi,
     ammRouterAddress,
@@ -11,9 +11,10 @@ import {
     useReadErc20BalanceOf,
     useReadAmmRouterGetReserves,
     useWriteAmmRouterAddLiquidity,
+    useWriteAmmRouterAddLiquidityEth,
 } from '@/generated';
-import { SUPPORTED_TOKENS } from '@/lib/tokens';
-import { useTokenPair } from '@/hooks/useTokenPair';
+import { ETH, SUPPORTED_TOKENS } from '@/lib/tokens';
+import { Token, useTokenPair } from '@/hooks/useTokenPair';
 import { useWaitForTransactionReceipt } from 'wagmi';
 
 export function useAddLiquidity(pair: `0x${string}`) {
@@ -46,13 +47,14 @@ export function useAddLiquidity(pair: `0x${string}`) {
     const account = useAccount()
     const writeErc20Approve = useWriteErc20Approve()
     const writeAmmRouterAddLiquidity = useWriteAmmRouterAddLiquidity()
+    const writeAmmRouterAddLiquidityEth = useWriteAmmRouterAddLiquidityEth()
 
     const {
         isLoading: isConfirming,
         isSuccess: isConfirmed,
     } = useWaitForTransactionReceipt({ hash })
 
-    const { tokenA, tokenB, setTokenA, setTokenB } = useTokenPair(pair)
+    const { wethAddr, tokenA, tokenB, setTokenA, setTokenB } = useTokenPair(pair)
 
     const ammRouterGetReserves = useReadAmmRouterGetReserves({
         args: [tokenA?.address!, tokenB?.address!],
@@ -61,6 +63,9 @@ export function useAddLiquidity(pair: `0x${string}`) {
     const tokenBReserve = ammRouterGetReserves.data ? ammRouterGetReserves.data[1] : BigInt(0)
     const tokenPair = ammRouterGetReserves.data ? ammRouterGetReserves.data[2] : undefined
 
+    const ethBalance = useBalance({
+        address: account.address
+    })
     const tokenAAllowance = useReadErc20Allowance({
         address: tokenA?.address,
         args: [
@@ -75,6 +80,8 @@ export function useAddLiquidity(pair: `0x${string}`) {
             ammRouterAddress[chainId]
         ],
     })
+    const tokenAAllowanceData = tokenA?.isETH ? ethBalance.data?.value : tokenAAllowance.data
+    const tokenBAllowanceData = tokenB?.isETH ? ethBalance.data?.value : tokenBAllowance.data
 
     const tokenABalance = useReadErc20BalanceOf({
         address: tokenA?.address,
@@ -84,6 +91,8 @@ export function useAddLiquidity(pair: `0x${string}`) {
         address: tokenB?.address,
         args: [account.address!],
     })
+    const tokenABalanceData = tokenA?.isETH ? ethBalance.data?.value : tokenABalance.data
+    const tokenBBalanceData = tokenB?.isETH ? ethBalance.data?.value : tokenBBalance.data
 
     useEffect(() => {
         if (!(tokenA && tokenB && amountA && amountB)) {
@@ -108,38 +117,61 @@ export function useAddLiquidity(pair: `0x${string}`) {
         )
     }, [tokenA, tokenB, amountA, amountB, tokenAReserve])
 
-    const selectTokenA = (symbol: string) => {
-        if (!symbol || symbol === tokenB?.symbol) {
+    const selectToken = (val: string, tokenCheck: Token | null, setToken: (value: SetStateAction<Token | null>) => void) => {
+        if (!val) {
             return
         }
+
+        if (val === ETH.symbol) {
+            if (val === tokenCheck?.symbol) {
+                return
+            }
+
+            if (tokenCheck?.address === wethAddr) {
+                // not support ETH/WETH pair
+                return
+            }
+
+            setToken({
+                symbol: ETH.symbol,
+                decimals: ETH.decimals,
+                address: wethAddr,
+                isETH: true
+            })
+            return
+        }
+
         if (!tokenSymbols.data || !tokenDecimals.data) {
             return
         }
-        const idx = tokenSymbols.data.findIndex(s => s.result === symbol)
+
+        const idx = +val
+        const symbol = tokenSymbols.data[+idx].result as string
+        if (!symbol || symbol === tokenCheck?.symbol) {
+            return
+        }
+
         const decimals = tokenDecimals.data[idx].result as number
         const address = SUPPORTED_TOKENS[idx][chainId]
-        setTokenA({
+        if (address === wethAddr && tokenCheck?.isETH) {
+            // not support ETH/WETH pair
+            return
+        }
+
+        setToken({
             symbol,
             decimals,
-            address
+            address,
+            isETH: false
         })
     }
 
-    const selectTokenB = (symbol: string) => {
-        if (!symbol || symbol === tokenA?.symbol) {
-            return
-        }
-        if (!tokenSymbols.data || !tokenDecimals.data) {
-            return
-        }
-        const idx = tokenSymbols.data.findIndex(s => s.result === symbol)
-        const decimals = tokenDecimals.data[idx].result as number
-        const address = SUPPORTED_TOKENS[idx][chainId]
-        setTokenB({
-            symbol,
-            decimals,
-            address
-        })
+    const selectTokenA = (val: string) => {
+        selectToken(val, tokenB, setTokenA)
+    }
+
+    const selectTokenB = (val: string) => {
+        selectToken(val, tokenA, setTokenB)
     }
 
     const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -147,7 +179,7 @@ export function useAddLiquidity(pair: `0x${string}`) {
             return
         }
 
-        if (!tokenABalance.data || !tokenBBalance.data) {
+        if (!tokenABalanceData || !tokenBBalanceData) {
             return
         }
 
@@ -158,7 +190,7 @@ export function useAddLiquidity(pair: `0x${string}`) {
         const valV = isTokenA
             ? parseUnits(v, tokenA.decimals)
             : parseUnits(v, tokenB.decimals)
-        const balance = isTokenA ? tokenABalance.data : tokenBBalance.data
+        const balance = isTokenA ? tokenABalanceData : tokenBBalanceData
         if (valV > balance) {
             return
         }
@@ -169,7 +201,7 @@ export function useAddLiquidity(pair: `0x${string}`) {
                 const valB = (valV * tokenBReserve) / tokenAReserve
                 setAmountB(formatUnits(valB, tokenB.decimals))
                 setEnoughBalance(
-                    valV <= tokenABalance.data && valB <= tokenBBalance.data
+                    valV <= tokenABalanceData && valB <= tokenBBalanceData
                 )
             }
         } else {
@@ -178,7 +210,7 @@ export function useAddLiquidity(pair: `0x${string}`) {
                 const valA = (valV * tokenAReserve) / tokenBReserve
                 setAmountA(formatUnits(valA, tokenA.decimals))
                 setEnoughBalance(
-                    valV <= tokenBBalance.data && valA <= tokenABalance.data
+                    valV <= tokenBBalanceData && valA <= tokenABalanceData
                 )
             }
         }
@@ -194,8 +226,8 @@ export function useAddLiquidity(pair: `0x${string}`) {
         }
 
         if (
-            tokenAAllowance.data === undefined ||
-            tokenBAllowance.data === undefined
+            tokenAAllowanceData === undefined ||
+            tokenBAllowanceData === undefined
         ) {
             return
         }
@@ -205,7 +237,7 @@ export function useAddLiquidity(pair: `0x${string}`) {
         }
 
         const valA = parseUnits(amountA, tokenA.decimals)
-        if (tokenAAllowance.data < valA) {
+        if (tokenAAllowanceData < valA && !tokenA.isETH) {
             await writeErc20Approve.writeContractAsync({
                 account: account.address,
                 address: tokenA.address,
@@ -214,7 +246,7 @@ export function useAddLiquidity(pair: `0x${string}`) {
         }
 
         const valB = parseUnits(amountB, tokenB.decimals)
-        if (tokenBAllowance.data < valB) {
+        if (tokenBAllowanceData < valB && !tokenB.isETH) {
             await writeErc20Approve.writeContractAsync({
                 account: account.address,
                 address: tokenB.address,
@@ -222,21 +254,48 @@ export function useAddLiquidity(pair: `0x${string}`) {
             })
         }
 
-        const res = await writeAmmRouterAddLiquidity.writeContractAsync({
-            args: [
-                tokenA.address,
-                tokenB.address,
-                valA,
-                valB,
-                BigInt(0),
-                BigInt(0),
-                account.address,
-                BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
-            ],
-        })
+        let res = '' as `0x${string}`
+        if (tokenA.isETH) {
+            res = await writeAmmRouterAddLiquidityEth.writeContractAsync({
+                args: [
+                    tokenB.address,
+                    valB,
+                    BigInt(0),
+                    BigInt(0),
+                    account.address,
+                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                ],
+                value: valA
+            })
+
+        } else if (tokenB.isETH) {
+            res = await writeAmmRouterAddLiquidityEth.writeContractAsync({
+                args: [
+                    tokenA.address,
+                    valA,
+                    BigInt(0),
+                    BigInt(0),
+                    account.address,
+                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                ],
+                value: valB
+            })
+        } else {
+            res = await writeAmmRouterAddLiquidity.writeContractAsync({
+                args: [
+                    tokenA.address,
+                    tokenB.address,
+                    valA,
+                    valB,
+                    BigInt(0),
+                    BigInt(0),
+                    account.address,
+                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                ],
+            })
+        }
 
         setHash(res)
-
         setAmountA('')
         setAmountB('')
     }
@@ -244,8 +303,10 @@ export function useAddLiquidity(pair: `0x${string}`) {
     return {
         transactionStatus: {
             isPending: writeErc20Approve.isPending ||
+                writeAmmRouterAddLiquidityEth.isPending ||
                 writeAmmRouterAddLiquidity.isPending,
             error: writeErc20Approve.error ||
+                writeAmmRouterAddLiquidityEth.error ||
                 writeAmmRouterAddLiquidity.error,
             isConfirming,
             isConfirmed,
@@ -261,8 +322,8 @@ export function useAddLiquidity(pair: `0x${string}`) {
         amountB,
         priceBPerA,
         priceAPerB,
-        tokenABalance,
-        tokenBBalance,
+        tokenABalanceData,
+        tokenBBalanceData,
         tokenSymbols,
         shareOfPool,
         enoughBalance,

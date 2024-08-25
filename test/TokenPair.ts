@@ -68,7 +68,7 @@ describe("TokenPair", function () {
 
         // Need to use factory createPair instead of using initialize directly
         await pairFactory.createPair(token0Address, token1Address)
-        const createdTokenPairAddress = await pairFactory.allPairs(0)
+        const createdTokenPairAddress = await pairFactory.getPair(token0Address, token1Address)
 
         // get the tokenPair contract created by pairFactory contract
         const createdTokenPair = await hre.ethers.getContractAt("TokenPair", createdTokenPairAddress)
@@ -219,7 +219,7 @@ describe("TokenPair", function () {
 
     describe("Burn", async function () {
 
-        for (const liquidityRemoveRatio of [1, 2, 10]) {
+        for await (const liquidityRemoveRatio of [1, 2, 10]) {
 
             it("Should get back pair tokens and burn LP tokens. Ratio: " + 1 / liquidityRemoveRatio, async function () {
                 const token0Amount = toWei(1)

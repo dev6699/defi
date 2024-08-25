@@ -2,12 +2,13 @@
 
 import { formatUnits } from 'viem';
 
-import { useSwap } from '@/hooks/useSwap';
+import { SWAP_MODE, useSwap } from '@/hooks/useSwap';
 import { useAllPairs } from '@/hooks/useAllPairs';
 import { TokenPair, useTokenPair } from '@/hooks/useTokenPair';
 
 import Loader from '@/components/loader';
 import TransactionStatus from '@/components/transaction-status';
+import { ETH } from '@/lib/tokens';
 
 export default function Swap() {
     const { allPairs } = useAllPairs()
@@ -35,13 +36,15 @@ interface SwapProps {
 function _Swap({ tokenPairs }: SwapProps) {
     const {
         transactionStatus,
+        swapMode,
+        canSwap,
         tokenSymbols,
         tokenA,
         tokenB,
         amountA,
         amountB,
-        tokenABalance,
-        tokenBBalance,
+        tokenABalanceData,
+        tokenBBalanceData,
         bestSwapPath,
         price,
         priceImpact,
@@ -49,9 +52,20 @@ function _Swap({ tokenPairs }: SwapProps) {
         selectTokenB,
         reorderToken,
         handleAmountChange,
-        handleSwap
+        handleSwap,
+        handleWrap
     } = useSwap(tokenPairs)
-    const enoughBalance = tokenABalance.data && tokenA ? +amountA < +formatUnits(tokenABalance.data, tokenA.decimals) : false
+
+    const enoughBalance = tokenABalanceData && tokenA ? +amountA <= +formatUnits(tokenABalanceData, tokenA.decimals) : false
+
+    let tokenAValue = `${tokenSymbols.data?.findIndex(t => t.result === tokenA?.symbol)}`
+    if (tokenAValue === '-1') {
+        tokenAValue = tokenA?.symbol!
+    }
+    let tokenBValue = `${tokenSymbols.data?.findIndex(t => t.result === tokenB?.symbol)}`
+    if (tokenBValue === '-1') {
+        tokenBValue = tokenB?.symbol!
+    }
 
     return (
         <div>
@@ -66,13 +80,14 @@ function _Swap({ tokenPairs }: SwapProps) {
                         </label>
                         <select
                             id="buy-token"
-                            value={tokenA?.symbol ?? ''}
+                            value={tokenAValue ?? ''}
                             onChange={(e) => selectTokenA(e.target.value)}
                             className="w-full p-2 border border-black rounded text-black"
                         >
                             <option value="">Select Token</option>
+                            <option value={ETH.symbol}>{ETH.symbol}</option>
                             {tokenSymbols.data?.map((token, i) => (
-                                <option key={token.result} value={`${token.result}`}>{token.result}</option>
+                                <option key={token.result} value={`${i}`}>{token.result}</option>
                             ))}
                         </select>
                     </div>
@@ -89,12 +104,12 @@ function _Swap({ tokenPairs }: SwapProps) {
                             placeholder="Amount"
                             value={amountA}
                             onChange={handleAmountChange}
-                            max={tokenABalance.data && tokenA ? +formatUnits(tokenABalance.data, tokenA.decimals) : 0}
+                            max={tokenABalanceData && tokenA ? +formatUnits(tokenABalanceData, tokenA.decimals) : 0}
                         />
 
                         <div className='flex items-center mt-2'>
                             <p className="text-sm">
-                                Balance: {tokenABalance.data && tokenA ? formatUnits(tokenABalance.data, tokenA.decimals) : "-"}
+                                Balance: {tokenABalanceData && tokenA ? formatUnits(tokenABalanceData, tokenA.decimals) : "-"}
                             </p>
                         </div>
                     </div>
@@ -116,13 +131,14 @@ function _Swap({ tokenPairs }: SwapProps) {
                         </label>
                         <select
                             id="sell-token"
-                            value={tokenB?.symbol ?? ''}
+                            value={tokenBValue ?? ''}
                             onChange={(e) => selectTokenB(e.target.value)}
                             className="w-full p-2 border border-black rounded text-black"
                         >
                             <option value="">Select Token</option>
+                            <option value={ETH.symbol}>{ETH.symbol}</option>
                             {tokenSymbols.data?.map((token, i) => (
-                                <option key={token.result} value={`${token.result}`}>{token.result}</option>
+                                <option key={token.result} value={`${i}`}>{token.result}</option>
                             ))}
                         </select>
                     </div>
@@ -138,12 +154,12 @@ function _Swap({ tokenPairs }: SwapProps) {
                             placeholder="Amount"
                             value={amountB}
                             onChange={handleAmountChange}
-                            max={tokenBBalance.data && tokenB ? +formatUnits(tokenBBalance.data, tokenB.decimals) : 0}
+                            max={tokenBBalanceData && tokenB ? +formatUnits(tokenBBalanceData, tokenB.decimals) : 0}
                         />
 
                         <div className='flex items-center mt-2'>
                             <p className="text-sm">
-                                Balance: {tokenBBalance.data && tokenB ? formatUnits(tokenBBalance.data, tokenB.decimals) : "Insuficient tokens"}
+                                Balance: {tokenBBalanceData && tokenB ? formatUnits(tokenBBalanceData, tokenB.decimals) : "-"}
                             </p>
                         </div>
                     </div>
@@ -151,7 +167,7 @@ function _Swap({ tokenPairs }: SwapProps) {
             </div>
 
             {
-                (tokenA && tokenB && price > 0) ?
+                canSwap && swapMode === SWAP_MODE.SWAP && (tokenA && tokenB && price > 0) ?
                     <div className="mb-4 bg-gray-800 p-4 rounded">
                         <div className="flex justify-between items-center mb-2">
                             <span>Price:</span>
@@ -166,23 +182,50 @@ function _Swap({ tokenPairs }: SwapProps) {
                             <span className="font-semibold">{bestSwapPath}</span>
                         </div>
                     </div>
+                    :
+                    null
+            }
+
+            {
+                !canSwap && swapMode === SWAP_MODE.SWAP && amountA && amountB ?
+                    <div className="mb-4 bg-gray-800 p-4 rounded">
+                        {tokenA?.symbol}/{tokenB?.symbol} is not supported
+                    </div>
+                    :
+                    null
+            }
+
+            {
+                swapMode !== SWAP_MODE.SWAP ?
+                    <div className="mb-4 bg-gray-800 p-4 rounded">
+                        The exchange rate from {swapMode === SWAP_MODE.WRAP ? "ETH to WETH" : "WETH to ETH"} is always 1 : 1
+                    </div>
                     : null
             }
 
             <button
                 className={`
-            w-full text-black border border-black px-4 py-2 rounded transition-colors
+            w-full text-black border border-black px-4 py-2 rounded transition-colors mt-4
             ${!enoughBalance && price > 0 ?
                         'bg-red-500 cursor-not-allowed text-white hover:bg-red-300'
                         : 'bg-white hover:bg-gray-100'
                     }
             `}
-                onClick={handleSwap}
-                disabled={!enoughBalance || transactionStatus.isPending}
+                onClick={() => swapMode === SWAP_MODE.SWAP ? handleSwap() : handleWrap()}
+                disabled={
+                    transactionStatus.isPending ||
+                    (!enoughBalance || !canSwap) && swapMode === SWAP_MODE.SWAP}
             >
-                {enoughBalance ?
-                    transactionStatus.isPending ? 'Swapping...' :
-                        'Swap' : 'Insufficient Balance'}
+                {!enoughBalance && price > 0 ?
+                    "Insufficient Balance" :
+                    swapMode === SWAP_MODE.SWAP ?
+                        transactionStatus.isPending ? 'Swapping...' : 'Swap'
+                        :
+                        swapMode === SWAP_MODE.WRAP ?
+                            transactionStatus.isPending ? 'Wraping...' : 'Wrap'
+                            :
+                            transactionStatus.isPending ? 'Unwraping...' : 'Unwrap'
+                }
             </button>
             <TransactionStatus transactionStatus={transactionStatus} />
         </div>

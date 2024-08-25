@@ -8,6 +8,7 @@ import {
     useWriteErc20Approve,
     useReadErc20Allowance,
     useWriteAmmRouterRemoveLiquidity,
+    useWriteAmmRouterRemoveLiquidityEth,
 } from '@/generated';
 import { useTokenPair } from '@/hooks/useTokenPair';
 
@@ -41,6 +42,7 @@ export function useRemoveLiquidity(pair: `0x${string}`) {
 
     const writeErc20Approve = useWriteErc20Approve();
     const writeAmmRouterRemoveLiquidity = useWriteAmmRouterRemoveLiquidity();
+    const writeAmmRouterRemoveLiquidityEth = useWriteAmmRouterRemoveLiquidityEth();
     const {
         isLoading: isConfirming,
         isSuccess: isConfirmed,
@@ -51,7 +53,6 @@ export function useRemoveLiquidity(pair: `0x${string}`) {
         (+parseUnits(amount, tokenPairDecimals.data).toString() / +tokenPairTotalSupply.data.toString()) : 0
     const tokenAPooled = tokenA ? +formatUnits(BigInt(Math.round(shareRatio * +tokenAReserve.toString())), tokenA.decimals) : 0
     const tokenBPooled = tokenB ? +formatUnits(BigInt(Math.round(shareRatio * +tokenBReserve.toString())), tokenB.decimals) : 0
-
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!tokenPairDecimals.data || !tokenPairBalanceOf.data) {
@@ -110,17 +111,43 @@ export function useRemoveLiquidity(pair: `0x${string}`) {
             });
         }
 
-        const res = await writeAmmRouterRemoveLiquidity.writeContractAsync({
-            args: [
-                tokenA.address,
-                tokenB.address,
-                amt,
-                BigInt(0),
-                BigInt(0),
-                account.address,
-                BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
-            ],
-        });
+        let res = '' as `0x${string}`
+        if (tokenA.isETH) {
+            res = await writeAmmRouterRemoveLiquidityEth.writeContractAsync({
+                args: [
+                    tokenB.address,
+                    amt,
+                    BigInt(0),
+                    BigInt(0),
+                    account.address,
+                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                ],
+            })
+
+        } else if (tokenB.isETH) {
+            res = await writeAmmRouterRemoveLiquidityEth.writeContractAsync({
+                args: [
+                    tokenA.address,
+                    amt,
+                    BigInt(0),
+                    BigInt(0),
+                    account.address,
+                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                ],
+            })
+        } else {
+            res = await writeAmmRouterRemoveLiquidity.writeContractAsync({
+                args: [
+                    tokenA.address,
+                    tokenB.address,
+                    amt,
+                    BigInt(0),
+                    BigInt(0),
+                    account.address,
+                    BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30),
+                ],
+            });
+        }
         setHash(res)
         handlePercentChange(0);
     };
@@ -128,8 +155,10 @@ export function useRemoveLiquidity(pair: `0x${string}`) {
     return {
         transactionStatus: {
             isPending: writeErc20Approve.isPending ||
+                writeAmmRouterRemoveLiquidityEth.isPending ||
                 writeAmmRouterRemoveLiquidity.isPending,
             error: writeErc20Approve.error ||
+                writeAmmRouterRemoveLiquidityEth.error ||
                 writeAmmRouterRemoveLiquidity.error,
             isConfirming,
             isConfirmed,

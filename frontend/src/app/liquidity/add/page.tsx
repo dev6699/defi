@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAddLiquidity } from '@/hooks/useAddLiquidity';
 import Loader from '@/components/loader';
 import TransactionStatus from '@/components/transaction-status';
+import { ETH } from '@/lib/tokens';
 
 export default function AddLiquidity() {
     const searchParams = useSearchParams()
@@ -20,8 +21,8 @@ export default function AddLiquidity() {
         amountB,
         priceBPerA,
         priceAPerB,
-        tokenABalance,
-        tokenBBalance,
+        tokenABalanceData,
+        tokenBBalanceData,
         tokenSymbols,
         shareOfPool,
         enoughBalance,
@@ -35,6 +36,15 @@ export default function AddLiquidity() {
         return <Loader />
     }
 
+    let tokenAValue = `${tokenSymbols.data?.findIndex(t => t.result === tokenA?.symbol)}`
+    if (tokenAValue === '-1') {
+        tokenAValue = tokenA?.symbol!
+    }
+    let tokenBValue = `${tokenSymbols.data?.findIndex(t => t.result === tokenB?.symbol)}`
+    if (tokenBValue === '-1') {
+        tokenBValue = tokenB?.symbol!
+    }
+
     return (
         <div className="mx-auto">
             <h1 className="text-3xl font-bold mb-6">Add Liquidity</h1>
@@ -42,15 +52,16 @@ export default function AddLiquidity() {
                 <select
                     disabled={!!pair}
                     className="w-full p-2 border rounded text-black"
-                    value={tokenA?.symbol || ''}
+                    value={tokenAValue ?? ''}
                     onChange={(e) => selectTokenA(e.target.value)}
                 >
                     <option value="">{!!pair ? tokenA?.symbol : 'Select Token A'}</option>
+                    <option value={ETH.symbol}>{ETH.symbol}</option>
                     {tokenSymbols.data?.map((token, i) => (
-                        <option key={token.result} value={`${token.result}`}>{token.result}</option>
+                        <option key={token.result} value={`${i}`}>{token.result}</option>
                     ))}
                 </select>
-                {tokenA && tokenABalance.data && (
+                {tokenA && tokenABalanceData && (
                     <div className="mt-2">
                         <input
                             type="number"
@@ -59,9 +70,9 @@ export default function AddLiquidity() {
                             id="tokenA"
                             onChange={handleAmountChange}
                             placeholder="Amount"
-                            max={+formatUnits(tokenABalance.data, tokenA.decimals)}
+                            max={+formatUnits(tokenABalanceData, tokenA.decimals)}
                         />
-                        <p className="text-sm mt-1">Balance: {formatUnits(tokenABalance.data, tokenA.decimals)}</p>
+                        <p className="text-sm mt-1">Balance: {formatUnits(tokenABalanceData, tokenA.decimals)}</p>
                     </div>
                 )}
             </div>
@@ -70,15 +81,16 @@ export default function AddLiquidity() {
                 <select
                     disabled={!!pair}
                     className="w-full p-2 border rounded text-black"
-                    value={tokenB?.symbol || ''}
+                    value={tokenBValue ?? ''}
                     onChange={(e) => selectTokenB(e.target.value)}
                 >
                     <option value=""> {!!pair ? tokenB?.symbol : 'Select Token B'}</option>
+                    <option value={ETH.symbol}>{ETH.symbol}</option>
                     {tokenSymbols.data?.map((token, i) => (
-                        <option key={token.result} value={`${token.result}`}>{token.result}</option>
+                        <option key={token.result} value={`${i}`}>{token.result}</option>
                     ))}
                 </select>
-                {tokenB && tokenBBalance.data && (
+                {tokenB && tokenBBalanceData && (
                     <div className="mt-2">
                         <input
                             type="number"
@@ -87,9 +99,9 @@ export default function AddLiquidity() {
                             id="tokenB"
                             onChange={handleAmountChange}
                             placeholder="Amount"
-                            max={+formatUnits(tokenBBalance.data, tokenB.decimals)}
+                            max={+formatUnits(tokenBBalanceData, tokenB.decimals)}
                         />
-                        <p className="text-sm mt-1">Balance: {formatUnits(tokenBBalance.data, tokenB.decimals)}</p>
+                        <p className="text-sm mt-1">Balance: {formatUnits(tokenBBalanceData, tokenB.decimals)}</p>
                     </div>
                 )}
             </div>
