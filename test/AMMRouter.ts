@@ -155,12 +155,13 @@ describe("AMMRouter", function () {
             const token0AmountAdd = toWei(10)
             const token1AmountAdd = toWei(15)
             const token1AmountAddOptimal = quote(token0AmountAdd, token0Amount, token1Amount)
+            const token0AmountAddOptimal = token1AmountAddOptimal
 
             const token0BalanceBefore = await token0.balanceOf(owner)
             const token1BalanceBefore = await token1.balanceOf(owner)
 
-            await token0.connect(owner).approve(ammRouterAddress, token0Amount + token0AmountAdd)
-            await token1.connect(owner).approve(ammRouterAddress, token1Amount + token1AmountAdd)
+            await token0.connect(owner).approve(ammRouterAddress, token0Amount + token0AmountAdd * BigInt(2))
+            await token1.connect(owner).approve(ammRouterAddress, token1Amount + token1AmountAdd * BigInt(2))
 
             await ammRouter.addLiquidity(
                 token0Address,
@@ -201,6 +202,7 @@ describe("AMMRouter", function () {
                 // revert because optimal amount less than desired amount
             ).to.be.revertedWith('INSUFFICIENT_tokenA_AMOUNT')
 
+            // use token1Optimal 
             await ammRouter.addLiquidity(
                 token0Address,
                 token1Address,
@@ -222,6 +224,22 @@ describe("AMMRouter", function () {
             const token1BalanceAfter = await token1.balanceOf(owner)
             expect(token0BalanceBefore - token0BalanceAfter).to.eq(token0Reserve)
             expect(token1BalanceBefore - token1BalanceAfter).to.eq(token1Reserve)
+
+            // use token0Optimal 
+            await ammRouter.addLiquidity(
+                token1Address,
+                token0Address,
+                token1AmountAdd,
+                token0AmountAdd,
+                BigInt(0),
+                BigInt(0),
+                owner.address,
+                BigInt(parseInt(`${new Date().getTime() / 1000}`) + 30)
+            )
+
+            const [token0Reserve2, token1Reserve2] = await tokenPair.getReserves()
+            expect(token0Reserve2 - token0Reserve).to.eq(token0AmountAddOptimal)
+            expect(token1Reserve2 - token1Reserve).to.eq(token1AmountAddOptimal)
         })
 
         describe("addWithETH", function () {
