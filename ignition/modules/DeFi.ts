@@ -8,6 +8,7 @@ const DeFiModule = buildModule("DeFi", (m) => {
     const pairFactory = m.contract("PairFactory");
     const weth = m.contract("WETH");
     const ammRouter = m.contract("AMMRouter", [pairFactory, weth]);
+    const stakingPoolManager = m.contract("StakingPoolManager");
 
     return {
         simpleDeFiToken,
@@ -16,7 +17,8 @@ const DeFiModule = buildModule("DeFi", (m) => {
         barToken,
         pairFactory,
         weth,
-        ammRouter
+        ammRouter,
+        stakingPoolManager
     };
 });
 

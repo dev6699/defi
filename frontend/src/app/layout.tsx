@@ -30,7 +30,7 @@ export default function RootLayout({
         <Providers initialState={initialState}>
           <div className="min-h-screen">
             <TopNav />
-            <main className="container mx-auto p-8 max-w-3xl">
+            <main className="container mx-auto p-8 max-w-4xl">
               {children}
             </main>
           </div>

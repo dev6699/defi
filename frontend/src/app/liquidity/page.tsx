@@ -1,12 +1,19 @@
 "use client"
 
 import Link from 'next/link';
-import TokenPair from "@/components/token-pair";
+
 import { useAllPairs } from '@/hooks/useAllPairs';
+
+import Loader from '@/components/loader';
+import TokenPair from "@/components/token-pair";
 
 export default function Liquidity() {
 
-    const { allPairs } = useAllPairs()
+    const { allPairsResult, loaded } = useAllPairs()
+
+    if (!loaded) {
+        return <Loader />
+    }
 
     return (
         <div>
@@ -17,8 +24,8 @@ export default function Liquidity() {
                 </Link>
             </div>
             <div>
-                {allPairs.data?.map((pair, index) => (
-                    <TokenPair key={index} address={pair.result as `0x${string}`} />
+                {allPairsResult.map((address, index) => (
+                    <TokenPair key={index} address={address} />
                 ))}
             </div>
         </div>

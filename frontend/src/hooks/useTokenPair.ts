@@ -25,7 +25,7 @@ export interface Token {
 
 export type TokenPair = ReturnType<typeof useTokenPair>
 
-export const useTokenPair = (address: `0x${string}`) => {
+export const useTokenPair = (address?: `0x${string}`) => {
     const [tokenA, setTokenA] = useState<Token | null>(null);
     const [tokenB, setTokenB] = useState<Token | null>(null);
 

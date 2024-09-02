@@ -22,7 +22,12 @@ export const useAllPairs = () => {
         )
     });
 
+    const loaded = allPairsLength.data !== undefined && !(allPairs.data === undefined && allPairsLength.data > 0)
+
+    const allPairsResult = allPairs.data?.map(p => p.result as `0x${string}`) || []
+
     return {
-        allPairs
+        loaded,
+        allPairsResult
     }
 }

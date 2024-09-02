@@ -9,6 +9,8 @@ const NAV_ITEMS = [
     { name: 'Transfer', path: '/transfer' },
     { name: 'Liquidity', path: '/liquidity' },
     { name: 'Swap', path: '/swap' },
+    { name: 'Stake', path: '/stake' },
+    { name: 'Farm', path: '/farm' },
 ];
 
 export default function TopNav() {
@@ -30,7 +32,7 @@ export default function TopNav() {
                                     <span
                                         className={`
                                     cursor-pointer hover:underline mr-4
-                                    ${pathname !== '/' && item.path.startsWith(pathname) ? 'font-bold underline' : ''}
+                                    ${pathname !== '/' && pathname.startsWith(item.path) ? 'font-bold underline' : ''}
                                     `}
                                     >
                                         {item.name}

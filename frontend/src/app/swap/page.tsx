@@ -3,31 +3,18 @@
 import { formatUnits } from 'viem';
 
 import { SWAP_MODE, useSwap } from '@/hooks/useSwap';
-import { useAllPairs } from '@/hooks/useAllPairs';
-import { TokenPair, useTokenPair } from '@/hooks/useTokenPair';
+import { TokenPair } from '@/hooks/useTokenPair';
 
-import Loader from '@/components/loader';
 import TransactionStatus from '@/components/transaction-status';
 import { ETH } from '@/lib/tokens';
+import WithTokenPairs from '@/components/with-token-pairs';
 
 export default function Swap() {
-    const { allPairs } = useAllPairs()
-    if (!allPairs.data) {
-        return <Loader />
-    }
-    const allPairsResult = allPairs.data.map(p => p.result as `0x${string}`)
-    return <EnsureTokenPairsSwap allPairs={allPairsResult} />
-}
-
-interface EnsureTokenPairsSwapProps {
-    allPairs: `0x${string}`[]
-}
-function EnsureTokenPairsSwap({ allPairs }: EnsureTokenPairsSwapProps) {
-    const tokenPairs = allPairs.map(pair => useTokenPair(pair))
-    if (tokenPairs.length !== allPairs.length) {
-        return <Loader />
-    }
-    return <_Swap tokenPairs={tokenPairs} />
+    return (
+        <WithTokenPairs>
+            {(tokenPairs) => <_Swap tokenPairs={tokenPairs} />}
+        </WithTokenPairs>
+    )
 }
 
 interface SwapProps {

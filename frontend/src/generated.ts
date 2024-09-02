@@ -241,7 +241,7 @@ export const ammRouterAbi = [
  *
  */
 export const ammRouterAddress = {
-  31337: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+  31337: '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
 } as const
 
 /**
@@ -251,6 +251,24 @@ export const ammRouterConfig = {
   address: ammRouterAddress,
   abi: ammRouterAbi,
 } as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Address
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const addressAbi = [
+  {
+    type: 'error',
+    inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
+    name: 'AddressEmptyCode',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'AddressInsufficientBalance',
+  },
+  { type: 'error', inputs: [], name: 'FailedInnerCall' },
+] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BarToken
@@ -1286,6 +1304,42 @@ export const ierc20MetadataAbi = [
 ] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// IERC20Permit
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const ierc20PermitAbi = [
+  {
+    type: 'function',
+    inputs: [],
+    name: 'DOMAIN_SEPARATOR',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'nonces',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'owner', internalType: 'address', type: 'address' },
+      { name: 'spender', internalType: 'address', type: 'address' },
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'deadline', internalType: 'uint256', type: 'uint256' },
+      { name: 'v', internalType: 'uint8', type: 'uint8' },
+      { name: 'r', internalType: 'bytes32', type: 'bytes32' },
+      { name: 's', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'permit',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IERC721Errors
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2137,6 +2191,27 @@ export const reentrancyGuardAbi = [
 ] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SafeERC20
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const safeErc20Abi = [
+  {
+    type: 'error',
+    inputs: [
+      { name: 'spender', internalType: 'address', type: 'address' },
+      { name: 'currentAllowance', internalType: 'uint256', type: 'uint256' },
+      { name: 'requestedDecrease', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'SafeERC20FailedDecreaseAllowance',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SimpleDeFiToken
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2324,6 +2399,386 @@ export const simpleDeFiTokenAddress = {
 export const simpleDeFiTokenConfig = {
   address: simpleDeFiTokenAddress,
   abi: simpleDeFiTokenAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// StakingPool
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const stakingPoolAbi = [
+  {
+    type: 'constructor',
+    inputs: [
+      { name: '_stakedToken', internalType: 'contract ERC20', type: 'address' },
+      { name: '_rewardToken', internalType: 'contract ERC20', type: 'address' },
+      { name: '_rewardPerBlock', internalType: 'uint256', type: 'uint256' },
+      { name: '_rewardStartBlock', internalType: 'uint256', type: 'uint256' },
+      { name: '_rewardEndBlock', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
+    name: 'AddressEmptyCode',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'AddressInsufficientBalance',
+  },
+  { type: 'error', inputs: [], name: 'FailedInnerCall' },
+  {
+    type: 'error',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'OwnableInvalidOwner',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'OwnableUnauthorizedAccount',
+  },
+  { type: 'error', inputs: [], name: 'ReentrancyGuardReentrantCall' },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Deposit',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'tokenRecovered',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'RecoverToken',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'blockNumber',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'StopRewards',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'rewardPerBlock',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'UpdateRewardPerBlock',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'startBlock',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'endBlock',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'UpdateStartAndEndBlocks',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Withdraw',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'PRECISION_FACTOR',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'accTokenPerShare',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_amount', internalType: 'uint256', type: 'uint256' }],
+    name: 'deposit',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_user', internalType: 'address', type: 'address' }],
+    name: 'getPendingReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'lastRewardBlock',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_tokenAddress', internalType: 'address', type: 'address' },
+      { name: '_tokenAmount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'recoverWrongTokens',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'rewardEndBlock',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'rewardPerBlock',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'rewardStartBlock',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'rewardToken',
+    outputs: [{ name: '', internalType: 'contract ERC20', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'stakedToken',
+    outputs: [{ name: '', internalType: 'contract ERC20', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'stakedTokenSupply',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'stopRewards',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_rewardPerBlock', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'updateRewardPerBlock',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_rewardStartBlock', internalType: 'uint256', type: 'uint256' },
+      { name: '_rewardEndBlock', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'updateStartAndEndBlocks',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'userInfo',
+    outputs: [
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+      { name: 'rewardDebt', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_amount', internalType: 'uint256', type: 'uint256' }],
+    name: 'withdraw',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// StakingPoolManager
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ *
+ */
+export const stakingPoolManagerAbi = [
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'owner',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'stakingPool',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'CreateStakingPool',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_stakedToken', internalType: 'contract ERC20', type: 'address' },
+      { name: '_rewardToken', internalType: 'contract ERC20', type: 'address' },
+      { name: '_rewardPerBlock', internalType: 'uint256', type: 'uint256' },
+      { name: '_rewardStartBlock', internalType: 'uint256', type: 'uint256' },
+      { name: '_rewardEndBlock', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'createStakingPool',
+    outputs: [
+      { name: '', internalType: 'contract StakingPool', type: 'address' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllStakingPools',
+    outputs: [{ name: '', internalType: 'address[]', type: 'address[]' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    name: 'stakingPools',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+] as const
+
+/**
+ *
+ */
+export const stakingPoolManagerAddress = {
+  31337: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
+} as const
+
+/**
+ *
+ */
+export const stakingPoolManagerConfig = {
+  address: stakingPoolManagerAddress,
+  abi: stakingPoolManagerAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2838,7 +3293,7 @@ export const wethAbi = [
  *
  */
 export const wethAddress = {
-  31337: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
+  31337: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
 } as const
 
 /**
@@ -4206,6 +4661,61 @@ export const useWatchIerc20MetadataTransferEvent =
   })
 
 /**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link ierc20PermitAbi}__
+ */
+export const useReadIerc20Permit = /*#__PURE__*/ createUseReadContract({
+  abi: ierc20PermitAbi,
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link ierc20PermitAbi}__ and `functionName` set to `"DOMAIN_SEPARATOR"`
+ */
+export const useReadIerc20PermitDomainSeparator =
+  /*#__PURE__*/ createUseReadContract({
+    abi: ierc20PermitAbi,
+    functionName: 'DOMAIN_SEPARATOR',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link ierc20PermitAbi}__ and `functionName` set to `"nonces"`
+ */
+export const useReadIerc20PermitNonces = /*#__PURE__*/ createUseReadContract({
+  abi: ierc20PermitAbi,
+  functionName: 'nonces',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ierc20PermitAbi}__
+ */
+export const useWriteIerc20Permit = /*#__PURE__*/ createUseWriteContract({
+  abi: ierc20PermitAbi,
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ierc20PermitAbi}__ and `functionName` set to `"permit"`
+ */
+export const useWriteIerc20PermitPermit = /*#__PURE__*/ createUseWriteContract({
+  abi: ierc20PermitAbi,
+  functionName: 'permit',
+})
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ierc20PermitAbi}__
+ */
+export const useSimulateIerc20Permit = /*#__PURE__*/ createUseSimulateContract({
+  abi: ierc20PermitAbi,
+})
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ierc20PermitAbi}__ and `functionName` set to `"permit"`
+ */
+export const useSimulateIerc20PermitPermit =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: ierc20PermitAbi,
+    functionName: 'permit',
+  })
+
+/**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link iPairFactoryAbi}__
  */
 export const useReadIPairFactory = /*#__PURE__*/ createUseReadContract({
@@ -5403,6 +5913,445 @@ export const useWatchSimpleDeFiTokenTransferEvent =
     abi: simpleDeFiTokenAbi,
     address: simpleDeFiTokenAddress,
     eventName: 'Transfer',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__
+ */
+export const useReadStakingPool = /*#__PURE__*/ createUseReadContract({
+  abi: stakingPoolAbi,
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"PRECISION_FACTOR"`
+ */
+export const useReadStakingPoolPrecisionFactor =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'PRECISION_FACTOR',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"accTokenPerShare"`
+ */
+export const useReadStakingPoolAccTokenPerShare =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'accTokenPerShare',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"getPendingReward"`
+ */
+export const useReadStakingPoolGetPendingReward =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'getPendingReward',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"lastRewardBlock"`
+ */
+export const useReadStakingPoolLastRewardBlock =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'lastRewardBlock',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"owner"`
+ */
+export const useReadStakingPoolOwner = /*#__PURE__*/ createUseReadContract({
+  abi: stakingPoolAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"rewardEndBlock"`
+ */
+export const useReadStakingPoolRewardEndBlock =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'rewardEndBlock',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"rewardPerBlock"`
+ */
+export const useReadStakingPoolRewardPerBlock =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'rewardPerBlock',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"rewardStartBlock"`
+ */
+export const useReadStakingPoolRewardStartBlock =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'rewardStartBlock',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"rewardToken"`
+ */
+export const useReadStakingPoolRewardToken =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'rewardToken',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"stakedToken"`
+ */
+export const useReadStakingPoolStakedToken =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'stakedToken',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"stakedTokenSupply"`
+ */
+export const useReadStakingPoolStakedTokenSupply =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolAbi,
+    functionName: 'stakedTokenSupply',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"userInfo"`
+ */
+export const useReadStakingPoolUserInfo = /*#__PURE__*/ createUseReadContract({
+  abi: stakingPoolAbi,
+  functionName: 'userInfo',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__
+ */
+export const useWriteStakingPool = /*#__PURE__*/ createUseWriteContract({
+  abi: stakingPoolAbi,
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"deposit"`
+ */
+export const useWriteStakingPoolDeposit = /*#__PURE__*/ createUseWriteContract({
+  abi: stakingPoolAbi,
+  functionName: 'deposit',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"recoverWrongTokens"`
+ */
+export const useWriteStakingPoolRecoverWrongTokens =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolAbi,
+    functionName: 'recoverWrongTokens',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useWriteStakingPoolRenounceOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"stopRewards"`
+ */
+export const useWriteStakingPoolStopRewards =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolAbi,
+    functionName: 'stopRewards',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useWriteStakingPoolTransferOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"updateRewardPerBlock"`
+ */
+export const useWriteStakingPoolUpdateRewardPerBlock =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolAbi,
+    functionName: 'updateRewardPerBlock',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"updateStartAndEndBlocks"`
+ */
+export const useWriteStakingPoolUpdateStartAndEndBlocks =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolAbi,
+    functionName: 'updateStartAndEndBlocks',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"withdraw"`
+ */
+export const useWriteStakingPoolWithdraw = /*#__PURE__*/ createUseWriteContract(
+  { abi: stakingPoolAbi, functionName: 'withdraw' },
+)
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__
+ */
+export const useSimulateStakingPool = /*#__PURE__*/ createUseSimulateContract({
+  abi: stakingPoolAbi,
+})
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"deposit"`
+ */
+export const useSimulateStakingPoolDeposit =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'deposit',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"recoverWrongTokens"`
+ */
+export const useSimulateStakingPoolRecoverWrongTokens =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'recoverWrongTokens',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useSimulateStakingPoolRenounceOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"stopRewards"`
+ */
+export const useSimulateStakingPoolStopRewards =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'stopRewards',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useSimulateStakingPoolTransferOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"updateRewardPerBlock"`
+ */
+export const useSimulateStakingPoolUpdateRewardPerBlock =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'updateRewardPerBlock',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"updateStartAndEndBlocks"`
+ */
+export const useSimulateStakingPoolUpdateStartAndEndBlocks =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'updateStartAndEndBlocks',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolAbi}__ and `functionName` set to `"withdraw"`
+ */
+export const useSimulateStakingPoolWithdraw =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolAbi,
+    functionName: 'withdraw',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__
+ */
+export const useWatchStakingPoolEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({ abi: stakingPoolAbi })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"Deposit"`
+ */
+export const useWatchStakingPoolDepositEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'Deposit',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const useWatchStakingPoolOwnershipTransferredEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"RecoverToken"`
+ */
+export const useWatchStakingPoolRecoverTokenEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'RecoverToken',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"StopRewards"`
+ */
+export const useWatchStakingPoolStopRewardsEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'StopRewards',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"UpdateRewardPerBlock"`
+ */
+export const useWatchStakingPoolUpdateRewardPerBlockEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'UpdateRewardPerBlock',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"UpdateStartAndEndBlocks"`
+ */
+export const useWatchStakingPoolUpdateStartAndEndBlocksEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'UpdateStartAndEndBlocks',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolAbi}__ and `eventName` set to `"Withdraw"`
+ */
+export const useWatchStakingPoolWithdrawEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolAbi,
+    eventName: 'Withdraw',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__
+ *
+ *
+ */
+export const useReadStakingPoolManager = /*#__PURE__*/ createUseReadContract({
+  abi: stakingPoolManagerAbi,
+  address: stakingPoolManagerAddress,
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__ and `functionName` set to `"getAllStakingPools"`
+ *
+ *
+ */
+export const useReadStakingPoolManagerGetAllStakingPools =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+    functionName: 'getAllStakingPools',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__ and `functionName` set to `"stakingPools"`
+ *
+ *
+ */
+export const useReadStakingPoolManagerStakingPools =
+  /*#__PURE__*/ createUseReadContract({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+    functionName: 'stakingPools',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__
+ *
+ *
+ */
+export const useWriteStakingPoolManager = /*#__PURE__*/ createUseWriteContract({
+  abi: stakingPoolManagerAbi,
+  address: stakingPoolManagerAddress,
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__ and `functionName` set to `"createStakingPool"`
+ *
+ *
+ */
+export const useWriteStakingPoolManagerCreateStakingPool =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+    functionName: 'createStakingPool',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__
+ *
+ *
+ */
+export const useSimulateStakingPoolManager =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link stakingPoolManagerAbi}__ and `functionName` set to `"createStakingPool"`
+ *
+ *
+ */
+export const useSimulateStakingPoolManagerCreateStakingPool =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+    functionName: 'createStakingPool',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolManagerAbi}__
+ *
+ *
+ */
+export const useWatchStakingPoolManagerEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link stakingPoolManagerAbi}__ and `eventName` set to `"CreateStakingPool"`
+ *
+ *
+ */
+export const useWatchStakingPoolManagerCreateStakingPoolEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: stakingPoolManagerAbi,
+    address: stakingPoolManagerAddress,
+    eventName: 'CreateStakingPool',
   })
 
 /**
